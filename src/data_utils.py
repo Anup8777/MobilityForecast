@@ -12,7 +12,7 @@ import seaborn as sns
 import os
 import datetime
 import math
-from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import train_test_split
 
 def filter_outliers(df, data_type='Taxi', filter_method='StdDev3'):
 
@@ -204,8 +204,8 @@ def create_ST_map(data_path, data_type='Taxi', year=2022, month=1, plotting='Tru
     # Plot a heatmap of demand for the array of pickup and dropoff zones
     if plotting == 'True':
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12,12))
-        sns.heatmap(ST_map[:,:,0], ax=ax1, cmap="YlGnBu")
-        sns.heatmap(ST_map[:,:,17], ax=ax2, cmap="YlGnBu")
+        sns.heatmap(ST_map[:,:,8], ax=ax1, cmap="YlGnBu")
+        sns.heatmap(ST_map[:,:,18], ax=ax2, cmap="YlGnBu")
         # Additional color palletes: https://seaborn.pydata.org/tutorial/color_palettes.html
     return ST_map
 
