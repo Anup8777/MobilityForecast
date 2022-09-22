@@ -3,3 +3,4 @@ src/__pycache__/*
 ../help/images/
 help/*
 src/model.png
+src/generator.png
