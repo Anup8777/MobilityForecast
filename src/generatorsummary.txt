@@ -1,0 +1,33 @@
+Model: "generator"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ input_116 (InputLayer)      [(None, 4)]               0         
+                                                                 
+ dense_379 (Dense)           (None, 36992)             184960    
+                                                                 
+ reshape_58 (Reshape)        (None, 34, 34, 32)        0         
+                                                                 
+ conv2d_transpose_65 (Conv2D  (None, 68, 68, 32)       9248      
+ Transpose)                                                      
+                                                                 
+ conv2d_transpose_66 (Conv2D  (None, 136, 136, 16)     4624      
+ Transpose)                                                      
+                                                                 
+ conv2d_transpose_67 (Conv2D  (None, 272, 272, 8)      1160      
+ Transpose)                                                      
+                                                                 
+ conv2d_298 (Conv2D)         (None, 272, 272, 1)       9         
+                                                                 
+ reshape_59 (Reshape)        (None, 1, 272, 272, 1)    0         
+                                                                 
+ conv3d_transpose_15 (Conv3D  (None, 1, 272, 272, 1)   28        
+ Transpose)                                                      
+                                                                 
+ leaky_re_lu_161 (LeakyReLU)  (None, 1, 272, 272, 1)   0         
+                                                                 
+=================================================================
+Total params: 200,029
+Trainable params: 200,029
+Non-trainable params: 0
+_________________________________________________________________
