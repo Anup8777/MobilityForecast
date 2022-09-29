@@ -3,3 +3,7 @@ src/__pycache__/*
 ../help/images/
 help/*
 src/model.png
+src/generator.png
+src/binned_lat_lon.png
+src/*.png
+

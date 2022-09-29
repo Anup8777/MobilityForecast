@@ -12,6 +12,8 @@ import seaborn as sns
 import os
 import datetime
 import math
+import tensorflow as tf
+# from sklearn.model_selection import train_test_split
 
 import shapefile
 
@@ -290,3 +292,181 @@ def get_lat_lon(sf):
         
         content.append((loc_id, x, y))
     return pd.DataFrame(content, columns=["LocationID", "longitude", "latitude"])
+
+
+    class SpatialAttention(tf.keras.layers.Layer):
+      def __init__(self, kernel_size):
+        super(SpatialAttention, self).__init__()
+        self.kernel_size = kernel_size
+        
+        def build(self, input_shape):
+            self.conv2d = tf.keras.layers.Conv2D(filters = 1,
+                    kernel_size=self.kernel_size,
+                    strides=1,
+                    padding='same',
+                    activation='sigmoid',
+                    kernel_initializer='he_normal',
+                    use_bias=False)
+
+        def call(self, inputs):
+            
+            # AvgPool
+            avg_pool = tf.keras.layers.Lambda(lambda x: tf.keras.backend.mean(x, axis=3, keepdims=True))(inputs)
+            
+            # MaxPool
+            max_pool = tf.keras.layers.Lambda(lambda x: tf.keras.backend.max(x, axis=3, keepdims=True))(inputs)
+
+            attention = tf.keras.layers.Concatenate(axis=3)([avg_pool, max_pool])
+
+            attention = self.conv2d(attention)
+
+
+            return tf.keras.layers.multiply([inputs, attention])
+
+
+class SelfAttention(tf.keras.layers.Layer):
+    """ Adapted from the Zhang, Goodfellow, et al. paper """
+
+    # weight_init = tf_contrib.layers.xavier_initializer()
+    weight_regularizer = None
+    weight_regularizer_fully = None
+
+    def __init__(self, sess, args):
+        #My new inputs
+        self.channels = args.channels
+
+
+        self.model_name = "SAGAN"  # name for checkpoint
+        self.sess = sess
+        self.dataset_name = args.dataset
+        self.checkpoint_dir = args.checkpoint_dir
+        self.sample_dir = args.sample_dir
+        self.result_dir = args.result_dir
+        self.log_dir = args.log_dir
+
+        self.epoch = args.epoch
+        self.iteration = args.iteration
+        self.batch_size = args.batch_size
+        self.print_freq = args.print_freq
+        self.save_freq = args.save_freq
+        self.img_size = args.img_size
+
+        """ Generator """
+        self.layer_num = int(np.log2(self.img_size)) - 3
+        self.z_dim = args.z_dim  # dimension of noise-vector
+        self.gan_type = args.gan_type
+
+        """ Discriminator """
+        self.n_critic = args.n_critic
+        self.sn = args.sn
+        self.ld = args.ld
+
+
+        self.sample_num = args.sample_num  # number of generated images to be saved
+        self.test_num = args.test_num
+
+
+        # train
+        self.g_learning_rate = args.g_lr
+        self.d_learning_rate = args.d_lr
+        self.beta1 = args.beta1
+        self.beta2 = args.beta2
+
+        self.custom_dataset = False
+
+    def _spectral_norm(w, iteration=1):
+        w_shape = w.shape.as_list()
+        w = tf.reshape(w, [-1, w_shape[-1]])
+
+        u = tf.get_variable("u", [1, w_shape[-1]], initializer=tf.random_normal_initializer(), trainable=False)
+
+        u_hat = u
+        v_hat = None
+        for i in range(iteration):
+            """
+            power iteration
+            Usually iteration = 1 will be enough
+            """
+            v_ = tf.matmul(u_hat, tf.transpose(w))
+            v_hat = tf.nn.l2_normalize(v_)
+
+            u_ = tf.matmul(v_hat, w)
+            u_hat = tf.nn.l2_normalize(u_)
+
+        u_hat = tf.stop_gradient(u_hat)
+        v_hat = tf.stop_gradient(v_hat)
+
+        sigma = tf.matmul(tf.matmul(v_hat, w), tf.transpose(u_hat))
+
+        with tf.control_dependencies([u.assign(u_hat)]):
+            w_norm = w / sigma
+            w_norm = tf.reshape(w_norm, w_shape)
+
+        return w_norm    
+
+    def _conv(x, channels, kernel=4, stride=2, pad=0, pad_type='zero', use_bias=True, sn=False, scope='conv_0'):
+        with tf.variable_scope(scope):
+            if pad > 0:
+                h = x.get_shape().as_list()[1]
+                if h % stride == 0:
+                    pad = pad * 2
+                else:
+                    pad = max(kernel - (h % stride), 0)
+
+                pad_top = pad // 2
+                pad_bottom = pad - pad_top
+                pad_left = pad // 2
+                pad_right = pad - pad_left
+
+                if pad_type == 'zero':
+                    x = tf.pad(x, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]])
+                if pad_type == 'reflect':
+                    x = tf.pad(x, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]], mode='REFLECT')
+
+            if sn:
+                w = tf.get_variable("kernel", shape=[kernel, kernel, x.get_shape()[-1], channels], initializer=weight_init,
+                                    regularizer=weight_regularizer)
+                x = tf.nn.conv2d(input=x, filter=spectral_norm(w),
+                                strides=[1, stride, stride, 1], padding='VALID')
+                if use_bias:
+                    bias = tf.get_variable("bias", [channels], initializer=tf.constant_initializer(0.0))
+                    x = tf.nn.bias_add(x, bias)
+
+            else:
+                x = tf.layers.conv2d(inputs=x, filters=channels,
+                                    kernel_size=kernel, kernel_initializer=weight_init,
+                                    kernel_regularizer=weight_regularizer,
+                                    strides=stride, use_bias=use_bias)
+
+            return x
+
+
+
+    def _hw_flatten(x) :
+        return tf.reshape(x, shape=[x.shape[0], -1, x.shape[-1]])
+
+    def _attention(self, x, channels, scope='attention'):
+        with tf.variable_scope(scope):
+
+            f = conv(x, channels // 8, kernel=1, stride=1, sn=self.sn, scope='f_conv') # [bs, h, w, c']
+            g = conv(x, channels // 8, kernel=1, stride=1, sn=self.sn, scope='g_conv') # [bs, h, w, c']
+            h = conv(x, channels, kernel=1, stride=1, sn=self.sn, scope='h_conv') # [bs, h, w, c]
+
+            # N = h * w
+            s = tf.matmul(hw_flatten(g), hw_flatten(f), transpose_b=True) # # [bs, N, N]
+
+            beta = tf.nn.softmax(s)  # attention map
+
+            o = tf.matmul(beta, hw_flatten(h)) # [bs, N, C]
+            gamma = tf.get_variable("gamma", [1], initializer=tf.constant_initializer(0.0))
+
+            o = tf.reshape(o, shape=x.shape) # [bs, h, w, C]
+            o = conv(o, channels, kernel=1, stride=1, sn=self.sn, scope='attn_conv')
+
+            x = gamma * o + x
+
+        return x
+
+    def _build_module(self):
+
+        attention_block = self.attention()
