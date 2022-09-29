@@ -12,255 +12,281 @@ import seaborn as sns
 import os
 import datetime
 import math
-# from sklearn.model_selection import train_test_split
 
-def filter_outliers(df, data_type='Taxi', filter_method='StdDev3'):
+import shapefile
+
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import TimeSeriesSplit
+
+def load_data(data_dir, data_file, data_type='csv'):
+    """
+    Load data from csv or parquet file
+
+    Args:
+        data_dir (str): directory containing data file
+        data_file (str): name of data file
+
+    Returns:
+        df (pandas.DataFrame): data frame containing data
 
     """
-    Method for removing outlying data from the input dataset.
+    if data_type == 'csv':
+        df = pd.read_csv(os.path.join(data_dir, data_file))
+    elif data_type == 'parquet':
+        df = pd.read_parquet(os.path.join(data_dir, data_file))
+    return df
 
-    Input:  data_frame (unfiltered pandas data frame)
-    Output: filtered_data (filtered pandas data frame with outlying data removed)
+def zone_to_coord(_df):
+    df = _df
+    coords = pd.read_csv('/Users/probook/Documents/GitHub/mobilityforecast/utils/taxi_zones/taxi_zones.csv')
 
-    Opt:    filter_method (optional choice of filter method, default is StdDev3, which removes 
-        all data outside three standard deviations of the mean)
-            data_type (choice of taxi or weather dataset)
-    """
-    ind = []
+    df['start_lat'] = ""
+    df['start_lng'] = ""
+    df['end_lat'] = ""
+    df['end_lng'] = ""
+    for location_id in coords['LocationID'].unique():
+        df.loc[df['PULocationID'] == location_id, 'start_lng'] = coords.loc[coords['LocationID'] == location_id, 'Longitude'].values[0]
+        df.loc[df['PULocationID'] == location_id, 'start_lat'] = coords.loc[coords['LocationID'] == location_id, 'Latitude'].values[0]
+        df.loc[df['DOLocationID'] == location_id, 'end_lng'] = coords.loc[coords['LocationID'] == location_id, 'Longitude'].values[0]
+        df.loc[df['DOLocationID'] == location_id, 'end_lat'] = coords.loc[coords['LocationID'] == location_id, 'Latitude'].values[0]
 
-    if filter_method == 'StdDev3':
-        if data_type == 'Taxi':
+    return df
 
-            fare_outlier_max = df['fare_amount'].mean() + (df['fare_amount'].std()*3)
-            fare_outlier_min = 0
+def bin_data(_df, num_bins=10):
+    df = _df
 
-            tot_fare_outlier_max = df['total_amount'].mean() + (df['total_amount'].std()*3)
-            tot_fare_outlier_min = 0
-
-            trip_dist_outlier_max = df['trip_distance'].mean() + (df['trip_distance'].std()*3)
-            trip_dist_outlier_min = 0
-
-            # Removing the outliers in the data
-
-            fare_max_ind = df.index[df['fare_amount'] > fare_outlier_max].tolist() # fnding the indices of the outliers
-            fare_min_ind = df.index[df['fare_amount'] < fare_outlier_min].tolist()
-
-            tot_fare_max_ind = df.index[df['total_amount'] > tot_fare_outlier_max].tolist()
-            tot_fare_min_ind = df.index[df['total_amount'] < tot_fare_outlier_min].tolist()
-
-            trip_dist_ind_max = df.index[df['trip_distance'] > trip_dist_outlier_max].tolist()
-            trip_dist_ind_min = df.index[df['trip_distance'] < trip_dist_outlier_min].tolist()
-
-            passenger_count_ind = df.index[df['passenger_count'] == 0].tolist() # finding the indices of the taxi trips where there are no passengers
-
-            ind = sorted(fare_max_ind + fare_min_ind + tot_fare_max_ind + tot_fare_min_ind + trip_dist_ind_max + trip_dist_ind_min + passenger_count_ind) # accumulating all the outlier indices to filter them out
-
-            filtered_data = df.drop(ind) # remove all the outliers
+    #Split the data into latitude and longitude bins of equal size
+    regions = num_bins
     
-    return filtered_data 
+    start_lat_min = df['start_lat'].min()
+    start_lat_max = df['start_lat'].max()
+    start_lng_min = df['start_lng'].min()
+    start_lng_max = df['start_lng'].max()
 
+    end_lat_min = df['end_lat'].min()
+    end_lat_max = df['end_lat'].max()
+    end_lng_min = df['end_lng'].min()
+    end_lng_max = df['end_lng'].max()
 
+    west = min(start_lat_min, end_lat_min)
+    east = max(start_lat_max, end_lat_max)
 
-def create_ST_map(data_path, data_type='Taxi', year=2022, month=1, plotting='True'):
+    south = min(start_lng_min, end_lng_min)
+    north = max(start_lng_max, end_lng_max)
+
+    lat_bins = np.linspace(west,east,regions)
+    lng_bins = np.linspace(south, north, regions)
+
+    names = list(map(int, range(regions)))
+
+    cord_bins = np.array(np.meshgrid(np.arange(regions), np.arange(regions))).T.reshape(-1,2)
+    cord_bins = list(map(tuple, cord_bins))
+
+    df['start_lat_regions']=pd.cut(df['start_lat'], bins=regions,labels = names, retbins=False, right=True, include_lowest=True)
+    df['start_lng_regions']=pd.cut(df['start_lng'], bins=regions,labels= names, retbins=False, right=True, include_lowest=True)
+
+    df['end_lat_regions']=pd.cut(df['end_lat'], bins=regions,labels = names, retbins=False, right=True, include_lowest=True)
+    df['end_lng_regions']=pd.cut(df['end_lng'], bins=regions,labels= names, retbins=False, right=True, include_lowest=True)
+
+    df['PU_region'] =list(zip(df.start_lat_regions, df.start_lng_regions)) #np.array([*tmp]).tolist()
+    df['DO_region'] =list(zip(df.end_lat_regions, df.end_lng_regions))
+
+    df = df.drop(columns=['start_lat_regions','start_lng_regions','end_lat_regions','end_lng_regions'])
+
+    for i in range(0,len(cord_bins)):
+        df.loc[df['PU_region'] == cord_bins[i], 'PU_region'] = i+1
+        df.loc[df['DO_region'] == cord_bins[i], 'DO_region'] = i+1
+
+    return df
+
+def data_preprocessing(_df, data_type='Taxi', year=2022, month=1, dropna=True, num_bins=10):
     """
-    Returns a 3D tensor of the spatial-temporal data with shape (pickup_zones, dropoff_zones, hours)
+    Preprocess one month of data
+
+    Args:
+        df (pandas.DataFrame): data frame containing data
+        data_type (str): the type of data contained in the df (i.e. Taxi, CitiBike, Metro, Weather)
+        dropna (bool): whether to drop rows with missing values
+
+    Returns:
+        df (pandas.DataFrame): preprocessed data frame
+
     """
-    
+    df = _df
+    if dropna:
+        df = df.dropna()
+    df = df.reset_index(drop=True)
+
     if data_type == 'Taxi':
-        # Creating the ST tensor for taxi data
-        df = pd.read_parquet(data_path, engine='pyarrow')
-        # Sort by pickup time
-        df = df.sort_values(by=['tpep_pickup_datetime'], ascending=True)
-
-        # Convert the date-time to python date-time objects to access built-in methods
-        df['tpep_pickup_datetime']=pd.to_datetime(df['tpep_pickup_datetime']) 
-        df['tpep_dropoff_datetime']=pd.to_datetime(df['tpep_dropoff_datetime'])
-
-        # dropping the store and forward flag, VendorID is the company that provided the record(this does not add any value to our study)
-        # RatecodeID and payment_type are categorical features affecting the price of the trip, we discard this for the moment as this does not add value to our study. 
-        # We also drop the extra and mta_tax as they are not relevant to our study
-        df = df.drop(columns=['store_and_fwd_flag', 'VendorID' , 'RatecodeID', 'payment_type','fare_amount', 'extra' , 'mta_tax', 'tip_amount',
-        'tolls_amount', 'improvement_surcharge','total_amount', 'congestion_surcharge', 'airport_fee', 'trip_distance', 'passenger_count']) 
-        # Drop the rows with missing values
-        df = df.dropna(axis=0)
-
-        # splitting the date-time objects to year, month, day, and hour
-        df['pickup_year'] = df['tpep_pickup_datetime'].apply(lambda t: t.year)
-        df['pickup_month'] = df['tpep_pickup_datetime'].apply(lambda t: t.month)
-        df['pickup_weekday'] = df['tpep_pickup_datetime'].apply(lambda t: t.day)
-        df['pickup_hour'] = df['tpep_pickup_datetime'].apply(lambda t: t.hour)
-
-        # dropping the date-time objects
-        df = df.drop(columns=['tpep_pickup_datetime', 'tpep_dropoff_datetime']) 
-
-        # Remove all data not in the specified year and month
-        df = df[(df.pickup_year == year)]
-        df = df[(df.pickup_month == month)]
+        drop_cols = ['store_and_fwd_flag', 'VendorID' , 'RatecodeID', 'payment_type','fare_amount', 'extra' , 'mta_tax', 'tip_amount',
+        'tolls_amount', 'improvement_surcharge','total_amount', 'congestion_surcharge', 'airport_fee', 'trip_distance', 'passenger_count']
         
-        # Remove year and month columns now that we have filtered out all other data
-        df = df.drop(columns=['pickup_year', 'pickup_month'])
+        sort_by = 'tpep_pickup_datetime'
 
-        # Create an Excel pivot table type object, aggregating the number of trips by hour and day, and changing the index to 'demand'
-        features = df.pivot_table(columns=["PULocationID", "DOLocationID","pickup_weekday", "pickup_hour"], aggfunc='size').reset_index(name='demand')
-        # Drop the index column
-        features = pd.DataFrame(features).reset_index(drop=True)
+        pu_date_time = 'tpep_pickup_datetime'
+        do_date_time = 'tpep_dropoff_datetime'
 
-        # splitting up the data frames by days and then hours
-        rows = 265+1 #265 zones in NYC dataset
-        cols = 265+1
+        # aggregate_cols = 'PULocationID', 'DOLocationID', 'pickup_weekday', 'pickup_hour'
 
-        # Get the unique days and hours in the dataset
-        days = np.unique(features.pickup_weekday)
-        hours = np.unique(features.pickup_hour)
-
-        # Create a 2D array with the features object entries for each day and hour
-        features_days = []
-        features_hours = []
-        features_days = [features[features.pickup_weekday == i] for i in days]
-        for i in range(0,len(features_days)):
-            for j in hours:
-                features_hours.append(features_days[i][features_days[i].pickup_hour == j])
-
-        # Initialize the 3D ST tensor with zeros of size (pickup zones, dropoff zones, days*hours)
-        ST_map = np.zeros((rows,cols, len(features_hours)))
-
-        # Fill the ST tensor with the demand values, dropping the day and hour columns and the index
-        for i in range(0,len(features_hours)):
-            features_hours[i] = features_hours[i].drop(columns=["pickup_weekday","pickup_hour"])
-            rind = np.array(features_hours[i].PULocationID.array)
-            cind = np.array(features_hours[i].DOLocationID.array)
-            demand = np.array(features_hours[i].demand.array)
-            ST_map[rind,cind,i] = demand
-        ST_map = ST_map[1::,1::,:]
-    """ Future code for bike data:
-    # if data_type == 'Bike':
-    #     # Creating the ST tensor for taxi data
-    #     df = pd.read_parquet(data_path, engine='pyarrow')
-    #     # Sort by pickup time
-    #     df = df.sort_values(by=['tpep_pickup_datetime'], ascending=True)
-
-    #     # Convert the date-time to python date-time objects to access built-in methods
-    #     df['tpep_pickup_datetime']=pd.to_datetime(df['tpep_pickup_datetime']) 
-    #     df['tpep_dropoff_datetime']=pd.to_datetime(df['tpep_dropoff_datetime'])
-
-    #     # dropping the store and forward flag, VendorID is the company that provided the record(this does not add any value to our study)
-    #     # RatecodeID and payment_type are categorical features affecting the price of the trip, we discard this for the moment as this does not add value to our study. 
-    #     # We also drop the extra and mta_tax as they are not relevant to our study
-    #     df = df.drop(columns=['store_and_fwd_flag', 'VendorID' , 'RatecodeID', 'payment_type','fare_amount', 'extra' , 'mta_tax', 'tip_amount',
-    #     'tolls_amount', 'improvement_surcharge','total_amount', 'congestion_surcharge', 'airport_fee', 'trip_distance', 'passenger_count']) 
-    #     # Drop the rows with missing values
-    #     df = df.dropna(axis=0)
-
-    #     # splitting the date-time objects to year, month, day, and hour
-    #     df['pickup_year'] = df['tpep_pickup_datetime'].apply(lambda t: t.year)
-    #     df['pickup_month'] = df['tpep_pickup_datetime'].apply(lambda t: t.month)
-    #     df['pickup_weekday'] = df['tpep_pickup_datetime'].apply(lambda t: t.day)
-    #     df['pickup_hour'] = df['tpep_pickup_datetime'].apply(lambda t: t.hour)
-
-    #     # dropping the date-time objects
-    #     df = df.drop(columns=['tpep_pickup_datetime', 'tpep_dropoff_datetime']) 
-
-    #     # Remove all data not in the specified year and month
-    #     df = df[(df.pickup_year == year)]
-    #     df = df[(df.pickup_month == month)]
+    elif data_type == 'CitiBike':
+        drop_cols = ['ride_id', 'rideable_type', 'start_station_name', 'start_station_id', 'end_station_name', 'end_station_id', 'member_casual']
         
-    #     # Remove year and month columns now that we have filtered out all other data
-    #     df = df.drop(columns=['pickup_year', 'pickup_month'])
+        sort_by = 'started_at'
 
-    #     # Create an Excel pivot table type object, aggregating the number of trips by hour and day, and changing the index to 'demand'
-    #     features = df.pivot_table(columns=["PULocationID", "DOLocationID","pickup_weekday", "pickup_hour"], aggfunc='size').reset_index(name='demand')
-    #     # Drop the index column
-    #     features = pd.DataFrame(features).reset_index(drop=True)
+        pu_date_time = 'started_at'
+        do_date_time = 'ended_at'
 
-    #     # splitting up the data frames by days and then hours
-    #     rows = 265+1 #265 zones in NYC dataset
-    #     cols = 265+1
+    elif data_type == 'Weather':
+        drop_cols = ['coordinates (lat,lon)','model (name)','model elevation (surface)','utc_offset (hrs)']
 
-    #     # Get the unique days and hours in the dataset
-    #     days = np.unique(features.pickup_weekday)
-    #     hours = np.unique(features.pickup_hour)
+        sort_by = 'datetime (UTC)'
 
-    #     # Create a 2D array with the features object entries for each day and hour
-    #     features_days = []
-    #     features_hours = []
-    #     features_days = [features[features.pickup_weekday == i] for i in days]
-    #     for i in range(0,len(features_days)):
-    #         for j in hours:
-    #             features_hours.append(features_days[i][features_days[i].pickup_hour == j])
+        pu_date_time = 'datetime (UTC)'
+        do_date_time = 'temp'
+        df[do_date_time] = df[pu_date_time]
 
-    #     # Initialize the 3D ST tensor with zeros of size (pickup zones, dropoff zones, days*hours)
-    #     ST_map = np.zeros((rows,cols, len(features_hours)))
-
-    #     # Fill the ST tensor with the demand values, dropping the day and hour columns and the index
-    #     for i in range(0,len(features_hours)):
-    #         features_hours[i] = features_hours[i].drop(columns=["pickup_weekday","pickup_hour"])
-    #         rind = np.array(features_hours[i].PULocationID.array)
-    #         cind = np.array(features_hours[i].DOLocationID.array)
-    #         demand = np.array(features_hours[i].demand.array)
-    #         ST_map[rind,cind,i] = demand
-    #     ST_map = ST_map[1::,1::,:]
-    """
+    # Prepare new date time columns
+    df[pu_date_time] = pd.to_datetime(df[pu_date_time])
+    df[do_date_time] = pd.to_datetime(df[do_date_time])
+    df['pickup_year'] = df[pu_date_time].apply(lambda t: t.year)
+    df['pickup_month'] = df[pu_date_time].apply(lambda t: t.month)
+    df['pickup_day'] = df[pu_date_time].apply(lambda t: t.day)
+    df['pickup_hour'] = df[pu_date_time].apply(lambda t: t.hour)
     
-    # Plot a heatmap of demand for the array of pickup and dropoff zones
-    if plotting == 'True':
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12,12))
-        sns.heatmap(ST_map[:,:,8], ax=ax1, cmap="YlGnBu")
-        sns.heatmap(ST_map[:,:,18], ax=ax2, cmap="YlGnBu")
-        # Additional color palletes: https://seaborn.pydata.org/tutorial/color_palettes.html
+    # Sort by date
+    df = df.sort_values(by=sort_by, ascending=True)
+    # Drop columns and remove all unnecessary data (not in target year and month)
+    df = df.drop(columns=drop_cols)
+    df = df.drop(columns=[pu_date_time, do_date_time])
+    df = df[(df['pickup_year'] == year) & (df['pickup_month'] == month)]
+    df = df.drop(columns=['pickup_year', 'pickup_month'])
+
+    # Convert zone to latitudes and longitudes (only for taxi data)
+    if data_type == 'Taxi':
+        df = zone_to_coord(df)
+    # Bin bike and taxi data by latitude and longitude (start with 32 bins)
+
+    if data_type == 'Taxi' or data_type == 'CitiBike':
+        df['start_lat'] = pd.to_numeric(df['start_lat'])
+        df['start_lng'] = pd.to_numeric(df['start_lng'])
+        df['end_lat'] = pd.to_numeric(df['end_lat'])
+        df['end_lng'] = pd.to_numeric(df['end_lng'])
+        df = bin_data(df, num_bins)
+
+        df = df.apply(lambda col:pd.to_numeric(col, errors='coerce'))
+
+        ### Organize and aggregate taxi and bike demand, shape into 2D frames for each hour
+        df1 = df.groupby(['PU_region','DO_region','pickup_day','pickup_hour']).size().reset_index().rename(columns={0:'demand'})
+
+        days = np.unique(df1.pickup_day)
+        rows = num_bins**2
+        cols = num_bins**2
+        ST_map = np.zeros((rows, cols, 24, (len(days))))
+        for hour in range(24):
+            for day in days:
+                # print(hour,day)
+                df2 = df1[(df1.pickup_day == day) & (df1.pickup_hour == hour)]
+                df2 = df2.drop(columns=['pickup_day','pickup_hour'])
+                df2 = df2.reset_index(drop=True, inplace=False)
+                # print(len(df2))
+                for i in range(len(df2)):
+                    rind = int(df2.PU_region[i])
+                    cind = int(df2.DO_region[i])
+                    demand = df2.demand[i]
+                    ST_map[rind-1, cind-1, hour-1, day-1] = demand
+        #stack the st maps vertically to make one long 3D array of each hour for the month
+        ST_map = ST_map.reshape((ST_map.shape[0], ST_map.shape[1], -1))
+
+        ### Plot one hour of data
+        hour = 230
+        plt.imshow(ST_map[:,:,hour], cmap='hot', interpolation='None')
+        plt.title('Rides in each binned zone on ' + str(year) + ' ' + str(month) + ' ' + str(int(hour/24)+1) + ' hour ' + str(hour%24))
+        plt.show()
+
+
+    ### Process weather data
+    if data_type == 'Weather':
+        df1 = df.apply(lambda col:pd.to_numeric(col, errors='coerce'))
+        days = np.unique(df1.pickup_day)
+        ST_map = np.zeros((1, 5, 24, (len(days))))
+        for hour in range(24):
+            for day in days:
+                # print(hour,day)
+                df2 = df1[(df1.pickup_day == day) & (df1.pickup_hour == hour)]
+                df2 = df2.drop(columns=['pickup_day','pickup_hour'])
+                df2 = df2.reset_index(drop=True, inplace=False)
+                # print(len(df2))
+                for i in range(len(df2)):
+                    # rind = int(df2.PU_region[i])
+                    # cind = int(df2.DO_region[i])
+                    temp = df2['temperature (degC)'][i]
+                    wind_speed = df2['wind_speed (m/s)'][i]
+                    total_precip = df2['total_precipitation (mm of water equivalent)'][i]
+                    snowfall = df2['snowfall (mm of water equivalent)'][i]
+                    snow_depth = df2['snow_depth (mm of water equivalent)'][i]
+                    ST_map[:, 0, hour-1, day-1] = temp
+                    ST_map[:, 1, hour-1, day-1] = wind_speed
+                    ST_map[:, 2, hour-1, day-1] = total_precip
+                    ST_map[:, 3, hour-1, day-1] = snowfall
+                    ST_map[:, 4, hour-1, day-1] = snow_depth
+        #stack the st maps vertically to make one long 3D array of each hour for the month
+        ST_map = ST_map.reshape((ST_map.shape[0], ST_map.shape[1], -1))
+
+    ### TODO: Process metro data
+
     return ST_map
 
-def _data_loader(st_map, val_size=0.15, test_size=0.15, temporal_map='hour'):
-    """
-    Expects only 1 month of data
-    Returns 3D ST maps for each temporal interval (e.g. every hour for a day, every hour for a week, every day for a week, all over the entire course of the month)
-    Each of these ST maps are split into train, validation, and test bins
-    End result is a 4D set of ST maps with dimensions [pickup_zones, dropoff_zones, hours/days, month_days/month_weeks]
-    """
-    train_size = 1 - val_size - test_size
+def plot_map(_ST_map):
+    sum_vec = np.sum(np.sum(_ST_map, axis=0), axis=0)
+    plt.plot(sum_vec)
+    plt.title('Total Demand in All Zones per Hour')
+    plt.xlabel('Hour')
+    plt.ylabel('Total Trips')
 
-    # Get the number of days in the ST tensor as an integer
-    month_days = st_map.shape[2]//24
-    month_hours = st_map.shape[2]
+def split_data(_ST_map, n_splits=5):
+    tss = TimeSeriesSplit(n_splits=n_splits)
 
-    # Split the data into training, validation, and test sets
+    split_indices = list(range(_ST_map.shape[-1]))
 
-    train_hours = int(month_hours*train_size)
-    val_hours = int(month_hours*val_size)
-    test_hours = int(month_hours*test_size)
+    for train_ind, val_ind in tss.split(split_indices):
+        # print(train_ind, val_ind)
+        X_train, X_val = _ST_map[:,:,train_ind], _ST_map[:,:,val_ind]
 
-    train_ST = st_map[:,:,0:train_hours]
-    val_ST = st_map[:,:,train_hours:(train_hours+val_hours)]
-    test_ST = st_map[:,:,(train_hours+val_hours):]
-    if temporal_map=='hour':
-        train_ST = train_ST
-        val_ST = val_ST
-        test_ST = test_ST
-    elif temporal_map=='day':
-        train_days = np.zeros((st_map[0], st_map[1], train_ST[2]/24))
-        val_days = np.zeros((st_map[0], st_map[1], val_ST[2]/24))
-        test_days = np.zeros((st_map[0], st_map[1], test_ST[2]/24))
-        for day in range(month_days+1):
-            if day ==0:
-                train_days[day] = np.sum(train_ST[:,:,0:25])
-                val_days[day] = np.sum(val_ST[:,:,0:25])
-                test_days[day] = np.sum(test_ST[:,:,0:25])
-            else:
-                train_days[day] = np.sum(train_ST[:,:,(day*24)+1:((day+1)*24)+1]) 
-                val_days[day] = np.sum(val_ST[:,:,(day*24)+1:((day+1)*24)+1])
-                test_days[day] = np.sum(test_ST[:,:,(day*24)+1:((day+1)*24)+1])
+    # split_indices = list(range(X_train.shape[-1]))
+    # print(X_train.shape, X_val.shape)
+
+    # for train_ind, test_ind in tss.split(split_indices):
+    #     print(train_ind, test_ind)
+    #     X_train, X_test = X_train[:,:,train_ind], X_train[:,:,test_ind]
+
+    # return X_train, X_val
+    return X_train, X_val
+
+def scale_data(_ST_map):
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    s0, s1, s2 = _ST_map.shape[0], _ST_map.shape[1], _ST_map.shape[2]
+    _ST_map = _ST_map.reshape(s0 * s1, s2)
+    _ST_map = scaler.fit_transform(_ST_map)
+    _ST_map = _ST_map.reshape(s0, s1, s2)
+    # ST_map = scaler.fit_transform(_ST_map.reshape(-1, _ST_map.shape[-1])).reshape(_ST_map.shape)
+
+    return _ST_map
+
+def get_lat_lon(sf):
+    sf = shapefile.Reader("shape/taxi_zones.shp")
+    fields_name = [field[0] for field in sf.fields[1:]]
+    shp_dic = dict(zip(fields_name, list(range(len(fields_name)))))
+    attributes = sf.records()
+    shp_attr = [dict(zip(fields_name, attr)) for attr in attributes]
+    content = []
+    for sr in sf.shapeRecords():
+        shape = sr.shape
+        rec = sr.record
+        loc_id = rec[shp_dic['LocationID']]
         
-    elif temporal_map=='week':
-        train_weeks = np.zeros((st_map[0], st_map[1], np.round(train_ST[2]/(24*7))))
-        val_weeks = np.zeros((st_map[0], st_map[1], np.round(val_ST[2]/(24*7))))
-        test_weeks = np.zeros((st_map[0], st_map[1], np.round(test_ST[2]/(24*7))))
-        for week in range(np.round((month_hours/(24*7)))+1):
-            if week ==0:
-                train_weeks[week] = np.sum(train_ST[:,:,0:25])
-                val_weeks[week] = np.sum(val_ST[:,:,0:25])
-                test_weeks[week] = np.sum(test_ST[:,:,0:25])
-            else:
-                train_days[day] = np.sum(train_ST[:,:,(day*24)+1:((day+1)*24)+1]) 
-                val_days[day] = np.sum(val_ST[:,:,(day*24)+1:((day+1)*24)+1])
-                test_days[day] = np.sum(test_ST[:,:,(day*24)+1:((day+1)*24)+1])
-
-    return train_ST, val_ST, test_ST
+        x = (shape.bbox[0]+shape.bbox[2])/2
+        y = (shape.bbox[1]+shape.bbox[3])/2
+        
+        content.append((loc_id, x, y))
+    return pd.DataFrame(content, columns=["LocationID", "longitude", "latitude"])
