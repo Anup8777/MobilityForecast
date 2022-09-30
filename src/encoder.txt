@@ -1,0 +1,232 @@
+Model: "encoder"
+__________________________________________________________________________________________________
+ Layer (type)                   Output Shape         Param #     Connected to                     
+==================================================================================================
+ input_49 (InputLayer)          [(None, 6, 16, 16,   0           []                               
+                                1)]                                                               
+                                                                                                  
+ input_50 (InputLayer)          [(None, 6, 16, 16,   0           []                               
+                                1)]                                                               
+                                                                                                  
+ input_51 (InputLayer)          [(None, 6, 16, 16,   0           []                               
+                                1)]                                                               
+                                                                                                  
+ conv_lstm2d_114 (ConvLSTM2D)   (None, 6, 8, 8, 16)  9856        ['input_49[0][0]']               
+                                                                                                  
+ conv_lstm2d_117 (ConvLSTM2D)   (None, 6, 8, 8, 16)  9856        ['input_50[0][0]']               
+                                                                                                  
+ conv_lstm2d_120 (ConvLSTM2D)   (None, 6, 8, 8, 16)  9856        ['input_51[0][0]']               
+                                                                                                  
+ batch_normalization_143 (Batch  (None, 6, 8, 8, 16)  64         ['conv_lstm2d_114[0][0]']        
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_147 (Batch  (None, 6, 8, 8, 16)  64         ['conv_lstm2d_117[0][0]']        
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_151 (Batch  (None, 6, 8, 8, 16)  64         ['conv_lstm2d_120[0][0]']        
+ Normalization)                                                                                   
+                                                                                                  
+ conv_lstm2d_115 (ConvLSTM2D)   (None, 6, 4, 4, 32)  55424       ['batch_normalization_143[0][0]']
+                                                                                                  
+ conv_lstm2d_118 (ConvLSTM2D)   (None, 6, 4, 4, 32)  55424       ['batch_normalization_147[0][0]']
+                                                                                                  
+ conv_lstm2d_121 (ConvLSTM2D)   (None, 6, 4, 4, 32)  55424       ['batch_normalization_151[0][0]']
+                                                                                                  
+ batch_normalization_144 (Batch  (None, 6, 4, 4, 32)  128        ['conv_lstm2d_115[0][0]']        
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_148 (Batch  (None, 6, 4, 4, 32)  128        ['conv_lstm2d_118[0][0]']        
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_152 (Batch  (None, 6, 4, 4, 32)  128        ['conv_lstm2d_121[0][0]']        
+ Normalization)                                                                                   
+                                                                                                  
+ conv_lstm2d_116 (ConvLSTM2D)   (None, 6, 2, 2, 64)  221440      ['batch_normalization_144[0][0]']
+                                                                                                  
+ conv_lstm2d_119 (ConvLSTM2D)   (None, 6, 2, 2, 64)  221440      ['batch_normalization_148[0][0]']
+                                                                                                  
+ conv_lstm2d_122 (ConvLSTM2D)   (None, 6, 2, 2, 64)  221440      ['batch_normalization_152[0][0]']
+                                                                                                  
+ batch_normalization_145 (Batch  (None, 6, 2, 2, 64)  256        ['conv_lstm2d_116[0][0]']        
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_149 (Batch  (None, 6, 2, 2, 64)  256        ['conv_lstm2d_119[0][0]']        
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_153 (Batch  (None, 6, 2, 2, 64)  256        ['conv_lstm2d_122[0][0]']        
+ Normalization)                                                                                   
+                                                                                                  
+ conv3d_38 (Conv3D)             (None, 6, 2, 2, 1)   65          ['batch_normalization_145[0][0]']
+                                                                                                  
+ conv3d_39 (Conv3D)             (None, 6, 2, 2, 1)   65          ['batch_normalization_149[0][0]']
+                                                                                                  
+ conv3d_40 (Conv3D)             (None, 6, 2, 2, 1)   65          ['batch_normalization_153[0][0]']
+                                                                                                  
+ leaky_re_lu_171 (LeakyReLU)    (None, 6, 2, 2, 1)   0           ['conv3d_38[0][0]']              
+                                                                                                  
+ leaky_re_lu_175 (LeakyReLU)    (None, 6, 2, 2, 1)   0           ['conv3d_39[0][0]']              
+                                                                                                  
+ leaky_re_lu_179 (LeakyReLU)    (None, 6, 2, 2, 1)   0           ['conv3d_40[0][0]']              
+                                                                                                  
+ max_pooling3d_38 (MaxPooling3D  (None, 3, 1, 1, 1)  0           ['leaky_re_lu_171[0][0]']        
+ )                                                                                                
+                                                                                                  
+ max_pooling3d_39 (MaxPooling3D  (None, 3, 1, 1, 1)  0           ['leaky_re_lu_175[0][0]']        
+ )                                                                                                
+                                                                                                  
+ max_pooling3d_40 (MaxPooling3D  (None, 3, 1, 1, 1)  0           ['leaky_re_lu_179[0][0]']        
+ )                                                                                                
+                                                                                                  
+ batch_normalization_146 (Batch  (None, 3, 1, 1, 1)  4           ['max_pooling3d_38[0][0]']       
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_150 (Batch  (None, 3, 1, 1, 1)  4           ['max_pooling3d_39[0][0]']       
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_154 (Batch  (None, 3, 1, 1, 1)  4           ['max_pooling3d_40[0][0]']       
+ Normalization)                                                                                   
+                                                                                                  
+ conv2d_154 (Conv2D)            (None, 3, 1, 1, 1)   2           ['batch_normalization_146[0][0]']
+                                                                                                  
+ conv2d_153 (Conv2D)            (None, 3, 1, 1, 1)   2           ['batch_normalization_146[0][0]']
+                                                                                                  
+ conv2d_158 (Conv2D)            (None, 3, 1, 1, 1)   2           ['batch_normalization_150[0][0]']
+                                                                                                  
+ conv2d_157 (Conv2D)            (None, 3, 1, 1, 1)   2           ['batch_normalization_150[0][0]']
+                                                                                                  
+ conv2d_162 (Conv2D)            (None, 3, 1, 1, 1)   2           ['batch_normalization_154[0][0]']
+                                                                                                  
+ conv2d_161 (Conv2D)            (None, 3, 1, 1, 1)   2           ['batch_normalization_154[0][0]']
+                                                                                                  
+ tf.linalg.matmul_74 (TFOpLambd  (None, 3, 1, 1, 1)  0           ['conv2d_154[0][0]',             
+ a)                                                               'conv2d_153[0][0]']             
+                                                                                                  
+ tf.linalg.matmul_76 (TFOpLambd  (None, 3, 1, 1, 1)  0           ['conv2d_158[0][0]',             
+ a)                                                               'conv2d_157[0][0]']             
+                                                                                                  
+ tf.linalg.matmul_78 (TFOpLambd  (None, 3, 1, 1, 1)  0           ['conv2d_162[0][0]',             
+ a)                                                               'conv2d_161[0][0]']             
+                                                                                                  
+ tf.nn.softmax_37 (TFOpLambda)  (None, 3, 1, 1, 1)   0           ['tf.linalg.matmul_74[0][0]']    
+                                                                                                  
+ conv2d_155 (Conv2D)            (None, 3, 1, 1, 1)   2           ['batch_normalization_146[0][0]']
+                                                                                                  
+ tf.nn.softmax_38 (TFOpLambda)  (None, 3, 1, 1, 1)   0           ['tf.linalg.matmul_76[0][0]']    
+                                                                                                  
+ conv2d_159 (Conv2D)            (None, 3, 1, 1, 1)   2           ['batch_normalization_150[0][0]']
+                                                                                                  
+ tf.nn.softmax_39 (TFOpLambda)  (None, 3, 1, 1, 1)   0           ['tf.linalg.matmul_78[0][0]']    
+                                                                                                  
+ conv2d_163 (Conv2D)            (None, 3, 1, 1, 1)   2           ['batch_normalization_154[0][0]']
+                                                                                                  
+ tf.linalg.matmul_75 (TFOpLambd  (None, 3, 1, 1, 1)  0           ['tf.nn.softmax_37[0][0]',       
+ a)                                                               'conv2d_155[0][0]']             
+                                                                                                  
+ tf.linalg.matmul_77 (TFOpLambd  (None, 3, 1, 1, 1)  0           ['tf.nn.softmax_38[0][0]',       
+ a)                                                               'conv2d_159[0][0]']             
+                                                                                                  
+ tf.linalg.matmul_79 (TFOpLambd  (None, 3, 1, 1, 1)  0           ['tf.nn.softmax_39[0][0]',       
+ a)                                                               'conv2d_163[0][0]']             
+                                                                                                  
+ conv2d_156 (Conv2D)            (None, 3, 1, 1, 265  530         ['tf.linalg.matmul_75[0][0]']    
+                                )                                                                 
+                                                                                                  
+ conv2d_160 (Conv2D)            (None, 3, 1, 1, 265  530         ['tf.linalg.matmul_77[0][0]']    
+                                )                                                                 
+                                                                                                  
+ conv2d_164 (Conv2D)            (None, 3, 1, 1, 265  530         ['tf.linalg.matmul_79[0][0]']    
+                                )                                                                 
+                                                                                                  
+ tf.math.multiply_37 (TFOpLambd  (None, 3, 1, 1, 265  0          ['conv2d_156[0][0]']             
+ a)                             )                                                                 
+                                                                                                  
+ tf.math.multiply_38 (TFOpLambd  (None, 3, 1, 1, 265  0          ['conv2d_160[0][0]']             
+ a)                             )                                                                 
+                                                                                                  
+ tf.math.multiply_39 (TFOpLambd  (None, 3, 1, 1, 265  0          ['conv2d_164[0][0]']             
+ a)                             )                                                                 
+                                                                                                  
+ tf.__operators__.add_37 (TFOpL  (None, 3, 1, 1, 265  0          ['tf.math.multiply_37[0][0]',    
+ ambda)                         )                                 'batch_normalization_146[0][0]']
+                                                                                                  
+ tf.__operators__.add_38 (TFOpL  (None, 3, 1, 1, 265  0          ['tf.math.multiply_38[0][0]',    
+ ambda)                         )                                 'batch_normalization_150[0][0]']
+                                                                                                  
+ tf.__operators__.add_39 (TFOpL  (None, 3, 1, 1, 265  0          ['tf.math.multiply_39[0][0]',    
+ ambda)                         )                                 'batch_normalization_154[0][0]']
+                                                                                                  
+ add_37 (Add)                   (None, 3, 1, 1, 265  0           ['batch_normalization_146[0][0]',
+                                )                                 'tf.__operators__.add_37[0][0]']
+                                                                                                  
+ add_38 (Add)                   (None, 3, 1, 1, 265  0           ['batch_normalization_150[0][0]',
+                                )                                 'tf.__operators__.add_38[0][0]']
+                                                                                                  
+ add_39 (Add)                   (None, 3, 1, 1, 265  0           ['batch_normalization_154[0][0]',
+                                )                                 'tf.__operators__.add_39[0][0]']
+                                                                                                  
+ dense_138 (Dense)              (None, 3, 1, 1, 16)  4256        ['add_37[0][0]']                 
+                                                                                                  
+ dense_141 (Dense)              (None, 3, 1, 1, 16)  4256        ['add_38[0][0]']                 
+                                                                                                  
+ dense_144 (Dense)              (None, 3, 1, 1, 16)  4256        ['add_39[0][0]']                 
+                                                                                                  
+ leaky_re_lu_172 (LeakyReLU)    (None, 3, 1, 1, 16)  0           ['dense_138[0][0]']              
+                                                                                                  
+ leaky_re_lu_176 (LeakyReLU)    (None, 3, 1, 1, 16)  0           ['dense_141[0][0]']              
+                                                                                                  
+ leaky_re_lu_180 (LeakyReLU)    (None, 3, 1, 1, 16)  0           ['dense_144[0][0]']              
+                                                                                                  
+ dense_139 (Dense)              (None, 3, 1, 1, 32)  544         ['leaky_re_lu_172[0][0]']        
+                                                                                                  
+ dense_142 (Dense)              (None, 3, 1, 1, 32)  544         ['leaky_re_lu_176[0][0]']        
+                                                                                                  
+ dense_145 (Dense)              (None, 3, 1, 1, 32)  544         ['leaky_re_lu_180[0][0]']        
+                                                                                                  
+ leaky_re_lu_173 (LeakyReLU)    (None, 3, 1, 1, 32)  0           ['dense_139[0][0]']              
+                                                                                                  
+ leaky_re_lu_177 (LeakyReLU)    (None, 3, 1, 1, 32)  0           ['dense_142[0][0]']              
+                                                                                                  
+ leaky_re_lu_181 (LeakyReLU)    (None, 3, 1, 1, 32)  0           ['dense_145[0][0]']              
+                                                                                                  
+ dense_140 (Dense)              (None, 3, 1, 1, 64)  2112        ['leaky_re_lu_173[0][0]']        
+                                                                                                  
+ dense_143 (Dense)              (None, 3, 1, 1, 64)  2112        ['leaky_re_lu_177[0][0]']        
+                                                                                                  
+ dense_146 (Dense)              (None, 3, 1, 1, 64)  2112        ['leaky_re_lu_181[0][0]']        
+                                                                                                  
+ leaky_re_lu_174 (LeakyReLU)    (None, 3, 1, 1, 64)  0           ['dense_140[0][0]']              
+                                                                                                  
+ leaky_re_lu_178 (LeakyReLU)    (None, 3, 1, 1, 64)  0           ['dense_143[0][0]']              
+                                                                                                  
+ leaky_re_lu_182 (LeakyReLU)    (None, 3, 1, 1, 64)  0           ['dense_146[0][0]']              
+                                                                                                  
+ concatenate_7 (Concatenate)    (None, 3, 1, 1, 192  0           ['leaky_re_lu_174[0][0]',        
+                                )                                 'leaky_re_lu_178[0][0]',        
+                                                                  'leaky_re_lu_182[0][0]']        
+                                                                                                  
+ dense_147 (Dense)              (None, 3, 1, 1, 16)  3088        ['concatenate_7[0][0]']          
+                                                                                                  
+ leaky_re_lu_183 (LeakyReLU)    (None, 3, 1, 1, 16)  0           ['dense_147[0][0]']              
+                                                                                                  
+ dense_148 (Dense)              (None, 3, 1, 1, 16)  272         ['leaky_re_lu_183[0][0]']        
+                                                                                                  
+ leaky_re_lu_184 (LeakyReLU)    (None, 3, 1, 1, 16)  0           ['dense_148[0][0]']              
+                                                                                                  
+ dense_149 (Dense)              (None, 3, 1, 1, 16)  272         ['leaky_re_lu_184[0][0]']        
+                                                                                                  
+ leaky_re_lu_185 (LeakyReLU)    (None, 3, 1, 1, 16)  0           ['dense_149[0][0]']              
+                                                                                                  
+ flatten_6 (Flatten)            (None, 48)           0           ['leaky_re_lu_185[0][0]']        
+                                                                                                  
+ z_mean (Dense)                 (None, 4)            196         ['flatten_6[0][0]']              
+                                                                                                  
+ z_log_var (Dense)              (None, 4)            196         ['flatten_6[0][0]']              
+                                                                                                  
+ sampling_6 (Sampling)          (None, 4)            0           ['z_mean[0][0]',                 
+                                                                  'z_log_var[0][0]']              
+                                                                                                  
+==================================================================================================
+Total params: 888,079
+Trainable params: 887,401
+Non-trainable params: 678
+__________________________________________________________________________________________________
