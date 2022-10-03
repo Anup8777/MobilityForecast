@@ -1,5 +1,15 @@
 # MobilityForecast
 
+
+# Follow without Fail:
+
+1. Pictures of size min. (12,12) inches with minimum dpi=300
+2. Sell the story - Focus on 1 Narrative
+3. Correct image types and format
+
+
+
+
 Framework to forecast mobility data via ML
 
 ## Getting started
