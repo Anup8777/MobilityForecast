@@ -6,11 +6,13 @@ Contains methods for loading and preprocessing datasets.
 """
 import pandas as pd
 import numpy as np
+import numpy.polynomial.polynomial as poly
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import datetime
+import calendar
 import math
 import tensorflow as tf
 # from sklearn.model_selection import train_test_split
@@ -21,7 +23,8 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import TimeSeriesSplit
 
-def load_data(data_dir, data_file, data_type='csv'):
+
+def load_data(data_dir, data_file, data_type='parquet'):
     """
     Load data from csv or parquet file
 
@@ -43,15 +46,15 @@ def zone_to_coord(_df):
     df = _df
     coords = pd.read_csv('/Users/probook/Documents/GitHub/mobilityforecast/utils/taxi_zones/taxi_zones.csv')
 
-    df['start_lat'] = ""
-    df['start_lng'] = ""
-    df['end_lat'] = ""
-    df['end_lng'] = ""
+    df['start station latitude'] = ""
+    df['start station longitude'] = ""
+    df['end station latitude'] = ""
+    df['end station longitude'] = ""
     for location_id in coords['LocationID'].unique():
-        df.loc[df['PULocationID'] == location_id, 'start_lng'] = coords.loc[coords['LocationID'] == location_id, 'Longitude'].values[0]
-        df.loc[df['PULocationID'] == location_id, 'start_lat'] = coords.loc[coords['LocationID'] == location_id, 'Latitude'].values[0]
-        df.loc[df['DOLocationID'] == location_id, 'end_lng'] = coords.loc[coords['LocationID'] == location_id, 'Longitude'].values[0]
-        df.loc[df['DOLocationID'] == location_id, 'end_lat'] = coords.loc[coords['LocationID'] == location_id, 'Latitude'].values[0]
+        df.loc[df['PULocationID'] == location_id, 'start station longitude'] = coords.loc[coords['LocationID'] == location_id, 'Longitude'].values[0]
+        df.loc[df['PULocationID'] == location_id, 'start station latitude'] = coords.loc[coords['LocationID'] == location_id, 'Latitude'].values[0]
+        df.loc[df['DOLocationID'] == location_id, 'end station longitude'] = coords.loc[coords['LocationID'] == location_id, 'Longitude'].values[0]
+        df.loc[df['DOLocationID'] == location_id, 'end station latitude'] = coords.loc[coords['LocationID'] == location_id, 'Latitude'].values[0]
 
     return df
 
@@ -102,7 +105,7 @@ def bin_data(_df, num_bins=10):
 
     return df
 
-def data_preprocessing(_df, data_type='Taxi', year=2022, month=1, dropna=True, num_bins=10):
+def data_preprocessing(_df, _data_type='Taxi', _year=2021, _month=1, _dropna=True, _num_bins=10):
     """
     Preprocess one month of data
 
@@ -116,9 +119,20 @@ def data_preprocessing(_df, data_type='Taxi', year=2022, month=1, dropna=True, n
 
     """
     df = _df
-    if dropna:
-        df = df.dropna()
+    data_type = _data_type
+    year = _year
+    month = _month
+    dropna = _dropna
+    num_bins = _num_bins
+
+    print('\n', data_type, year, month, dropna, num_bins)
+    # print('orig',df.shape)
+    # if dropna:
+    #     df = df.dropna()
+    #     print('dropna',df.shape)
     df = df.reset_index(drop=True)
+    # df = df.reset_index()
+    # print('reset index',df.shape)
 
     if data_type == 'Taxi':
         drop_cols = ['store_and_fwd_flag', 'VendorID' , 'RatecodeID', 'payment_type','fare_amount', 'extra' , 'mta_tax', 'tip_amount',
@@ -132,12 +146,22 @@ def data_preprocessing(_df, data_type='Taxi', year=2022, month=1, dropna=True, n
         # aggregate_cols = 'PULocationID', 'DOLocationID', 'pickup_weekday', 'pickup_hour'
 
     elif data_type == 'CitiBike':
-        drop_cols = ['ride_id', 'rideable_type', 'start_station_name', 'start_station_id', 'end_station_name', 'end_station_id', 'member_casual']
         
-        sort_by = 'started_at'
+        # print('first col', df.columns[0])
 
-        pu_date_time = 'started_at'
-        do_date_time = 'ended_at'
+        if df.columns[0] == 'tripduration':
+            drop_cols = ['tripduration', 'start station id', 'start station name', 'end station id', 'end station name', 'bikeid', 'usertype', 'birth year', 'gender']
+            sort_by = 'starttime'
+            pu_date_time = 'starttime'
+            do_date_time = 'stoptime'
+        elif df.columns[0] =='ride_id':
+            drop_cols = ['ride_id', 'rideable_type', 'start_station_name', 'start_station_id', 'end_station_name', 'end_station_id', 'member_casual']
+            df.rename(columns={'start_lat':'start station latitude','start_lng':'start station longitude','end_lat':'end station latitude','end_lng':'end station longitude'}, inplace=True)
+            sort_by = 'started_at'
+            pu_date_time = 'started_at'
+            do_date_time = 'ended_at'
+
+
 
     elif data_type == 'Weather':
         drop_cols = ['coordinates (lat,lon)','model (name)','model elevation (surface)','utc_offset (hrs)']
@@ -158,33 +182,47 @@ def data_preprocessing(_df, data_type='Taxi', year=2022, month=1, dropna=True, n
     
     # Sort by date
     df = df.sort_values(by=sort_by, ascending=True)
+    # print('sort',df.shape)
     # Drop columns and remove all unnecessary data (not in target year and month)
     df = df.drop(columns=drop_cols)
     df = df.drop(columns=[pu_date_time, do_date_time])
     df = df[(df['pickup_year'] == year) & (df['pickup_month'] == month)]
     df = df.drop(columns=['pickup_year', 'pickup_month'])
+    # print('year, month',df.shape)
 
     # Convert zone to latitudes and longitudes (only for taxi data)
     if data_type == 'Taxi':
         df = zone_to_coord(df)
+        # print('zone to coord', df.shape)
     # Bin bike and taxi data by latitude and longitude (start with 32 bins)
 
+
     if data_type == 'Taxi' or data_type == 'CitiBike':
-        df['start_lat'] = pd.to_numeric(df['start_lat'])
-        df['start_lng'] = pd.to_numeric(df['start_lng'])
-        df['end_lat'] = pd.to_numeric(df['end_lat'])
-        df['end_lng'] = pd.to_numeric(df['end_lng'])
+        df['start_lat'] = pd.to_numeric(df['start station latitude'])
+        df['start_lng'] = pd.to_numeric(df['start station longitude'])
+        df['end_lat'] = pd.to_numeric(df['end station latitude'])
+        df['end_lng'] = pd.to_numeric(df['end station longitude'])
+        # print('to numeric',df.shape)
+        # print(df.head(n=1))
         df = bin_data(df, num_bins)
+        # print('bin',df.shape)
 
         df = df.apply(lambda col:pd.to_numeric(col, errors='coerce'))
+        # print('to_numeric',df.shape)
+        if dropna:
+            df = df.dropna()
+            # print('dropna',df.shape)
 
         ### Organize and aggregate taxi and bike demand, shape into 2D frames for each hour
         df1 = df.groupby(['PU_region','DO_region','pickup_day','pickup_hour']).size().reset_index().rename(columns={0:'demand'})
-
-        days = np.unique(df1.pickup_day)
+        # print('df1',df1.shape)
+        # days = np.unique(df1.pickup_day)
+        # print(days)
+        days = [*range(1,calendar.monthrange(year, month)[1]+1,1)]
         rows = num_bins**2
         cols = num_bins**2
         ST_map = np.zeros((rows, cols, 24, (len(days))))
+        # print('st_map',ST_map.shape)
         for hour in range(24):
             for day in days:
                 # print(hour,day)
@@ -200,18 +238,15 @@ def data_preprocessing(_df, data_type='Taxi', year=2022, month=1, dropna=True, n
         #stack the st maps vertically to make one long 3D array of each hour for the month
         ST_map = ST_map.reshape((ST_map.shape[0], ST_map.shape[1], -1))
 
-        ### Plot one hour of data
-        hour = 230
-        plt.imshow(ST_map[:,:,hour], cmap='hot', interpolation='None')
-        plt.title('Rides in each binned zone on ' + str(year) + ' ' + str(month) + ' ' + str(int(hour/24)+1) + ' hour ' + str(hour%24))
-        plt.show()
-
-
     ### Process weather data
     if data_type == 'Weather':
+        if dropna:
+            df = df.dropna()
+            # print('dropna',df.shape)
         df1 = df.apply(lambda col:pd.to_numeric(col, errors='coerce'))
         days = np.unique(df1.pickup_day)
         ST_map = np.zeros((1, 5, 24, (len(days))))
+        # print('st_map',ST_map.shape)
         for hour in range(24):
             for day in days:
                 # print(hour,day)
@@ -241,10 +276,35 @@ def data_preprocessing(_df, data_type='Taxi', year=2022, month=1, dropna=True, n
 
 def plot_map(_ST_map):
     sum_vec = np.sum(np.sum(_ST_map, axis=0), axis=0)
-    plt.plot(sum_vec)
+    x = np.arange(0, len(sum_vec), 1)
+    # print(x.shape)
+    # calc the trendline
+    z = poly.polyfit(x, sum_vec, 3)
+    # print(z.shape)
+    ffit = poly.polyval(x, z)
+    # print(ffit.shape)
+    # plt.plot(x, ffit)
+    # p = np.poly1d(z)
+    plt.plot(x,ffit,"r--")
+    plt.plot(sum_vec,'.')
     plt.title('Total Demand in All Zones per Hour')
     plt.xlabel('Hour')
     plt.ylabel('Total Trips')
+    plt.style.use('seaborn')
+    plt.show()
+
+def plot_heatmap(_ST_map, _year, _month, _day, _hour):
+        ### Plot one hour of data
+        year = _year
+        month = _month
+        day = _day
+        hour = _hour
+        ax = sns.heatmap(_ST_map[:,:,657], cmap="YlGnBu")
+        # plt.imshow(_ST_map[:,:,(hour+((day-1)*24))], cmap='hot', interpolation='None')
+        plt.title('Rides in each binned zone on ' + str(year) + ' ' + str(month) + ' ' + str(day) + ' hour ' + str(hour))
+        plt.xlabel('Pickup Zone')
+        plt.ylabel('Dropoff Zone')
+        plt.show()
 
 def split_data(_ST_map, n_splits=5):
     tss = TimeSeriesSplit(n_splits=n_splits)
@@ -325,6 +385,151 @@ def get_lat_lon(sf):
 
 
 class SelfAttention(tf.keras.layers.Layer):
+    """ Adapted from the Zhang, Goodfellow, et al. paper """
+
+    # weight_init = tf_contrib.layers.xavier_initializer()
+    weight_regularizer = None
+    weight_regularizer_fully = None
+
+    def __init__(self, sess, args):
+        #My new inputs
+        self.channels = args.channels
+
+
+        self.model_name = "SAGAN"  # name for checkpoint
+        self.sess = sess
+        self.dataset_name = args.dataset
+        self.checkpoint_dir = args.checkpoint_dir
+        self.sample_dir = args.sample_dir
+        self.result_dir = args.result_dir
+        self.log_dir = args.log_dir
+
+        self.epoch = args.epoch
+        self.iteration = args.iteration
+        self.batch_size = args.batch_size
+        self.print_freq = args.print_freq
+        self.save_freq = args.save_freq
+        self.img_size = args.img_size
+
+        """ Generator """
+        self.layer_num = int(np.log2(self.img_size)) - 3
+        self.z_dim = args.z_dim  # dimension of noise-vector
+        self.gan_type = args.gan_type
+
+        """ Discriminator """
+        self.n_critic = args.n_critic
+        self.sn = args.sn
+        self.ld = args.ld
+
+
+        self.sample_num = args.sample_num  # number of generated images to be saved
+        self.test_num = args.test_num
+
+
+        # train
+        self.g_learning_rate = args.g_lr
+        self.d_learning_rate = args.d_lr
+        self.beta1 = args.beta1
+        self.beta2 = args.beta2
+
+        self.custom_dataset = False
+
+    def _spectral_norm(w, iteration=1):
+        w_shape = w.shape.as_list()
+        w = tf.reshape(w, [-1, w_shape[-1]])
+
+        u = tf.get_variable("u", [1, w_shape[-1]], initializer=tf.random_normal_initializer(), trainable=False)
+
+        u_hat = u
+        v_hat = None
+        for i in range(iteration):
+            """
+            power iteration
+            Usually iteration = 1 will be enough
+            """
+            v_ = tf.matmul(u_hat, tf.transpose(w))
+            v_hat = tf.nn.l2_normalize(v_)
+
+            u_ = tf.matmul(v_hat, w)
+            u_hat = tf.nn.l2_normalize(u_)
+
+        u_hat = tf.stop_gradient(u_hat)
+        v_hat = tf.stop_gradient(v_hat)
+
+        sigma = tf.matmul(tf.matmul(v_hat, w), tf.transpose(u_hat))
+
+        with tf.control_dependencies([u.assign(u_hat)]):
+            w_norm = w / sigma
+            w_norm = tf.reshape(w_norm, w_shape)
+
+        return w_norm    
+
+    def _conv(x, channels, kernel=4, stride=2, pad=0, pad_type='zero', use_bias=True, sn=False, scope='conv_0'):
+        with tf.variable_scope(scope):
+            if pad > 0:
+                h = x.get_shape().as_list()[1]
+                if h % stride == 0:
+                    pad = pad * 2
+                else:
+                    pad = max(kernel - (h % stride), 0)
+
+                pad_top = pad // 2
+                pad_bottom = pad - pad_top
+                pad_left = pad // 2
+                pad_right = pad - pad_left
+
+                if pad_type == 'zero':
+                    x = tf.pad(x, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]])
+                if pad_type == 'reflect':
+                    x = tf.pad(x, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]], mode='REFLECT')
+
+            if sn:
+                w = tf.get_variable("kernel", shape=[kernel, kernel, x.get_shape()[-1], channels], initializer=weight_init,
+                                    regularizer=weight_regularizer)
+                x = tf.nn.conv2d(input=x, filter=spectral_norm(w),
+                                strides=[1, stride, stride, 1], padding='VALID')
+                if use_bias:
+                    bias = tf.get_variable("bias", [channels], initializer=tf.constant_initializer(0.0))
+                    x = tf.nn.bias_add(x, bias)
+
+            else:
+                x = tf.layers.conv2d(inputs=x, filters=channels,
+                                    kernel_size=kernel, kernel_initializer=weight_init,
+                                    kernel_regularizer=weight_regularizer,
+                                    strides=stride, use_bias=use_bias)
+
+            return x
+
+
+
+    def _hw_flatten(x) :
+        return tf.reshape(x, shape=[x.shape[0], -1, x.shape[-1]])
+
+    def _attention(self, x, channels, scope='attention'):
+        with tf.variable_scope(scope):
+
+            f = conv(x, channels // 8, kernel=1, stride=1, sn=self.sn, scope='f_conv') # [bs, h, w, c']
+            g = conv(x, channels // 8, kernel=1, stride=1, sn=self.sn, scope='g_conv') # [bs, h, w, c']
+            h = conv(x, channels, kernel=1, stride=1, sn=self.sn, scope='h_conv') # [bs, h, w, c]
+
+            # N = h * w
+            s = tf.matmul(hw_flatten(g), hw_flatten(f), transpose_b=True) # # [bs, N, N]
+
+            beta = tf.nn.softmax(s)  # attention map
+
+            o = tf.matmul(beta, hw_flatten(h)) # [bs, N, C]
+            gamma = tf.get_variable("gamma", [1], initializer=tf.constant_initializer(0.0))
+
+            o = tf.reshape(o, shape=x.shape) # [bs, h, w, C]
+            o = conv(o, channels, kernel=1, stride=1, sn=self.sn, scope='attn_conv')
+
+            x = gamma * o + x
+
+        return x
+
+    def _build_module(self):
+
+        attention_block = self.attention()
     """ Adapted from the Zhang, Goodfellow, et al. paper """
 
     # weight_init = tf_contrib.layers.xavier_initializer()
