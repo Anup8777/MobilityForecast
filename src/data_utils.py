@@ -58,44 +58,79 @@ def zone_to_coord(_df):
 
     return df
 
-def bin_data(_df, num_bins=10):
+def coords_to_zones(_df):
     df = _df
 
-    #Split the data into latitude and longitude bins of equal size
+    return df
+
+def bin_data(df, num_bins=5):
+ 
     regions = num_bins
-    
-    start_lat_min = df['start_lat'].min()
-    start_lat_max = df['start_lat'].max()
-    start_lng_min = df['start_lng'].min()
-    start_lng_max = df['start_lng'].max()
 
-    end_lat_min = df['end_lat'].min()
-    end_lat_max = df['end_lat'].max()
-    end_lng_min = df['end_lng'].min()
-    end_lng_max = df['end_lng'].max()
+    # start_lat_min = df['start_lat'].min()
+    # start_lat_max = df['start_lat'].max()
+    # start_lng_min = df['start_lng'].min()
+    # start_lng_max = df['start_lng'].max()
 
-    west = min(start_lat_min, end_lat_min)
-    east = max(start_lat_max, end_lat_max)
+    # end_lat_min = df['end_lat'].min()
+    # end_lat_max = df['end_lat'].max()
+    # end_lng_min = df['end_lng'].min()
+    # end_lng_max = df['end_lng'].max()
 
-    south = min(start_lng_min, end_lng_min)
-    north = max(start_lng_max, end_lng_max)
+    # south = min(start_lat_min, end_lat_min)
+    south = 40.5
+    north = 40.9
+    # north = max(start_lat_max, end_lat_max)
 
-    lat_bins = np.linspace(west,east,regions)
-    lng_bins = np.linspace(south, north, regions)
+    # west = min(start_lng_min, end_lng_min)
+    west = -74.25
+    east = -73.9
+    # east = max(start_lng_max, end_lng_max)
+
+    print('south: ', south, 'north: ', north, 'west: ', west, 'east: ', east)
+
+    lat_bins = np.linspace(south,north,regions)
+    lng_bins = np.linspace(west, east, regions)
+
+    print('bins: ', lat_bins, lng_bins)
+
+    step = (north - south) / regions
+    to_bin = lambda x: np.floor(x / step) * step
+    df["start_lat_bin"] = to_bin(df.start_lat)
+    df["start_lon_bin"] = to_bin(df.start_lng)
+    df["end_lat_bin"] = to_bin(df.end_lat)
+    df["end_lon_bin"] = to_bin(df.end_lng)
+
+    # print('******* binned',df.head())
+
+    coords = df[['start_lat_bin', 'start_lon_bin', 'end_lat_bin', 'end_lon_bin']].copy()
 
     names = list(map(int, range(regions)))
+
+    # print('names: ', names)
+
 
     cord_bins = np.array(np.meshgrid(np.arange(regions), np.arange(regions))).T.reshape(-1,2)
     cord_bins = list(map(tuple, cord_bins))
 
-    df['start_lat_regions']=pd.cut(df['start_lat'], bins=regions,labels = names, retbins=False, right=True, include_lowest=True)
-    df['start_lng_regions']=pd.cut(df['start_lng'], bins=regions,labels= names, retbins=False, right=True, include_lowest=True)
+    # print('cord_bins: ', cord_bins)
 
-    df['end_lat_regions']=pd.cut(df['end_lat'], bins=regions,labels = names, retbins=False, right=True, include_lowest=True)
-    df['end_lng_regions']=pd.cut(df['end_lng'], bins=regions,labels= names, retbins=False, right=True, include_lowest=True)
+    df['start_lat_regions']=pd.cut(df['start_lat_bin'], bins=regions,labels = names, retbins=False, right=True, include_lowest=True)
+    df['start_lng_regions']=pd.cut(df['start_lon_bin'], bins=regions,labels= names, retbins=False, right=True, include_lowest=True)
+
+    # print('start_lat_regions: ', df['start_lat_regions'])
+
+    df['end_lat_regions']=pd.cut(df['end_lat_bin'], bins=regions,labels = names, retbins=False, right=True, include_lowest=True)
+    df['end_lng_regions']=pd.cut(df['end_lon_bin'], bins=regions,labels= names, retbins=False, right=True, include_lowest=True)
+
+    # print('******* to regions',df.head())
 
     df['PU_region'] =list(zip(df.start_lat_regions, df.start_lng_regions)) #np.array([*tmp]).tolist()
     df['DO_region'] =list(zip(df.end_lat_regions, df.end_lng_regions))
+
+    # print('******* PU_region: ', df.head())
+    # print('pu regions: ', df['PU_region'].unique())
+    # print('df regions: ', df['DO_region'].unique())
 
     df = df.drop(columns=['start_lat_regions','start_lng_regions','end_lat_regions','end_lng_regions'])
 
@@ -103,7 +138,7 @@ def bin_data(_df, num_bins=10):
         df.loc[df['PU_region'] == cord_bins[i], 'PU_region'] = i+1
         df.loc[df['DO_region'] == cord_bins[i], 'DO_region'] = i+1
 
-    return df
+    return df, coords
 
 def data_preprocessing(_df, _data_type='Taxi', _year=2021, _month=1, _dropna=True, _num_bins=10):
     """
@@ -204,7 +239,11 @@ def data_preprocessing(_df, _data_type='Taxi', _year=2021, _month=1, _dropna=Tru
         df['end_lng'] = pd.to_numeric(df['end station longitude'])
         # print('to numeric',df.shape)
         # print(df.head(n=1))
-        df = bin_data(df, num_bins)
+
+
+        ###########################################
+        # """
+        df, coords = bin_data(df, num_bins)
         # print('bin',df.shape)
 
         df = df.apply(lambda col:pd.to_numeric(col, errors='coerce'))
@@ -212,9 +251,11 @@ def data_preprocessing(_df, _data_type='Taxi', _year=2021, _month=1, _dropna=Tru
         if dropna:
             df = df.dropna()
             # print('dropna',df.shape)
-
+        # """
         ### Organize and aggregate taxi and bike demand, shape into 2D frames for each hour
         df1 = df.groupby(['PU_region','DO_region','pickup_day','pickup_hour']).size().reset_index().rename(columns={0:'demand'})
+        # df1 = df.groupby(['start_lat_bin','start_lon_bin','end_lat_bin','end_lon_bin','pickup_day','pickup_hour']).size().reset_index().rename(columns={0:'demand'})
+        
         # print('df1',df1.shape)
         # days = np.unique(df1.pickup_day)
         # print(days)
@@ -240,6 +281,7 @@ def data_preprocessing(_df, _data_type='Taxi', _year=2021, _month=1, _dropna=Tru
 
     ### Process weather data
     if data_type == 'Weather':
+        coords = pd.DataFrame()
         if dropna:
             df = df.dropna()
             # print('dropna',df.shape)
@@ -272,7 +314,7 @@ def data_preprocessing(_df, _data_type='Taxi', _year=2021, _month=1, _dropna=Tru
 
     ### TODO: Process metro data
 
-    return ST_map
+    return ST_map, coords
 
 def plot_map(_ST_map):
     sum_vec = np.sum(np.sum(_ST_map, axis=0), axis=0)
@@ -299,7 +341,7 @@ def plot_heatmap(_ST_map, _year, _month, _day, _hour):
         month = _month
         day = _day
         hour = _hour
-        ax = sns.heatmap(_ST_map[:,:,657], cmap="YlGnBu")
+        ax = sns.heatmap(_ST_map[:,:,hour], cmap="YlGnBu")
         # plt.imshow(_ST_map[:,:,(hour+((day-1)*24))], cmap='hot', interpolation='None')
         plt.title('Rides in each binned zone on ' + str(year) + ' ' + str(month) + ' ' + str(day) + ' hour ' + str(hour))
         plt.xlabel('Pickup Zone')
@@ -352,6 +394,22 @@ def get_lat_lon(sf):
         
         content.append((loc_id, x, y))
     return pd.DataFrame(content, columns=["LocationID", "longitude", "latitude"])
+    sf = shapefile.Reader("shape/taxi_zones.shp")
+    fields_name = [field[0] for field in sf.fields[1:]]
+    shp_dic = dict(zip(fields_name, list(range(len(fields_name)))))
+    attributes = sf.records()
+    shp_attr = [dict(zip(fields_name, attr)) for attr in attributes]
+    content = []
+    for sr in sf.shapeRecords():
+        shape = sr.shape
+        rec = sr.record
+        loc_id = rec[shp_dic['LocationID']]
+        
+        x = (shape.bbox[0]+shape.bbox[2])/2
+        y = (shape.bbox[1]+shape.bbox[3])/2
+        
+        content.append((loc_id, x, y))
+    return pd.DataFrame(content, columns=["LocationID", "longitude", "latitude"])
 
 
     class SpatialAttention(tf.keras.layers.Layer):
@@ -383,7 +441,15 @@ def get_lat_lon(sf):
 
             return tf.keras.layers.multiply([inputs, attention])
 
-
+def demand_scatter(_coords, _data_type='Taxi'):
+    values = _coords.value_counts().reset_index(name='demand')
+    temp = (1 + (1 * np.rint(values['demand'].to_numpy()/values['demand'].max())))**5
+    values.plot.scatter(x='start_lon_bin', y='start_lat_bin', s=temp, c='DarkBlue')
+    plt.xticks(np.arange(-74.4, -73.4, 0.2))
+    plt.yticks(np.arange(40.2, 41.2, 0.2))
+    plt.title(_data_type + ' Demand')
+    plt.show()
+    
 class SelfAttention(tf.keras.layers.Layer):
     """ Adapted from the Zhang, Goodfellow, et al. paper """
 
