@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Hudak, Padaki
+    given-names: Yuri, Anup
+title: "Multi-Modal Mobility Demand Generation for Urban Hubs: Preliminary Work"
+version: 1.0
+date-released: 2022-10-28

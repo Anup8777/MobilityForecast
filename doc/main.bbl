@@ -1,0 +1,271 @@
+\begin{thebibliography}{10}
+
+\bibitem{secretary_general_sustainable_2018}
+Secretary General.
+\newblock Sustainable cities, human mobility, and international migration.
+\newblock Technical report, United Nations Economic and Social Council, April
+  2018.
+
+\bibitem{ghorbanzadeh_sustainable_2019}
+Omid Ghorbanzadeh, Sarbast Moslem, Thomas Blaschke, and Szabolcs Duleba.
+\newblock Sustainable {Urban} {Transport} {Planning} {Considering} {Different}
+  {Stakeholder} {Groups} by an {Interval}-{AHP} {Decision} {Support} {Model}.
+\newblock {\em Sustainability}, 11(1):9, January 2019.
+\newblock Number: 1 Publisher: Multidisciplinary Digital Publishing Institute.
+
+\bibitem{canitez_sustainable_2020}
+Fatih Canitez, Pelin Alpkokin, and Sabahat~Topuz Kiremitci.
+\newblock Sustainable urban mobility in {Istanbul}: {Challenges} and prospects.
+\newblock {\em Case Studies on Transport Policy}, 8(4):1148--1157, December
+  2020.
+
+\bibitem{ortuzar_sustainable_2019}
+Juan de~Dios Ortúzar.
+\newblock Sustainable {Urban} {Mobility}: {What} {Can} {Be} {Done} to {Achieve}
+  {It}?
+\newblock {\em Journal of the Indian Institute of Science}, 99(4):683--693,
+  December 2019.
+
+\bibitem{noauthor_eit_nodate}
+{EIT} {Urban} {Mobility}.
+\newblock \url{https://eit.europa.eu/our-communities/eit-urban-mobility}.
+
+\bibitem{noauthor_future_nodate}
+The future of micromobility: {Ridership} and revenue after a crisis {\textbar}
+  {McKinsey}.
+\newblock
+  \url{https://www.mckinsey.com/industries/automotive-and-assembly/our-insights/the-future-of-micromobility-ridership-and-revenue-after-a-crisis}.
+
+\bibitem{frank_urban_2008}
+Lawrence Frank, Mark Bradley, Sarah Kavage, James Chapman, and T.~Keith Lawton.
+\newblock Urban form, travel time, and cost relationships with tour complexity
+  and mode choice.
+\newblock {\em Transportation}, 35(1):37--54, January 2008.
+
+\bibitem{beimborn_accessibility_2003}
+Edward~A. Beimborn, Michael~J. Greenwald, and Xia Jin.
+\newblock Accessibility, {Connectivity}, and {Captivity}: {Impacts} on
+  {Transit} {Choice}.
+\newblock {\em Transportation Research Record}, 1835(1):1--9, January 2003.
+\newblock Publisher: SAGE Publications Inc.
+
+\bibitem{iglesias_data-driven_2017}
+Ramon Iglesias, Federico Rossi, Kevin Wang, David Hallac, Jure Leskovec, and
+  Marco Pavone.
+\newblock Data-{Driven} {Model} {Predictive} {Control} of {Autonomous}
+  {Mobility}-on-{Demand} {Systems}.
+\newblock Technical Report arXiv:1709.07032, arXiv, September 2017.
+\newblock arXiv:1709.07032 [cs, stat] type: article.
+
+\bibitem{moreira-matias_predicting_2013}
+Luis Moreira-Matias, João Gama, Michel Ferreira, João Mendes-Moreira, and
+  Luis Damas.
+\newblock On {Predicting} the {Taxi}-{Passenger} {Demand}: {A} {Real}-{Time}
+  {Approach}.
+\newblock In Luís Correia, Luís~Paulo Reis, and José Cascalho, editors, {\em
+  Progress in {Artificial} {Intelligence}}, Lecture {Notes} in {Computer}
+  {Science}, pages 54--65, Berlin, Heidelberg, 2013. Springer.
+
+\bibitem{uhrig_sparsity_2017}
+Jonas Uhrig, Nick Schneider, Lukas Schneider, Uwe Franke, Thomas Brox, and
+  Andreas Geiger.
+\newblock Sparsity {Invariant} {CNNs}, August 2017.
+\newblock arXiv:1708.06500 [cs].
+
+\bibitem{zhang_mlrnn_2022}
+Chizhan Zhang, Fenghua Zhu, Yisheng Lv, Peijun Ye, and Fei-Yue Wang.
+\newblock {MLRNN}: {Taxi} {Demand} {Prediction} {Based} on {Multi}-{Level}
+  {Deep} {Learning} and {Regional} {Heterogeneity} {Analysis}.
+\newblock {\em IEEE Transactions on Intelligent Transportation Systems},
+  23(7):8412--8422, July 2022.
+
+\bibitem{hong_spatiotemporal_2021}
+Genxuan Hong, Zhanquan Wang, Taoli Han, and Hengming Ji.
+\newblock Spatiotemporal {Multi}-{Graph} {Convolutional} {Network} for {Taxi}
+  {Demand} {Prediction}.
+\newblock In {\em 2021 11th {International} {Conference} on {Information}
+  {Science} and {Technology} ({ICIST})}, pages 242--250, May 2021.
+\newblock ISSN: 2573-3311.
+
+\bibitem{liu_improved_2020}
+Dongchang Liu, Jia Mou, Yu~Liu, and Yiping Yang.
+\newblock Improved {Prediction} of {High} {Taxi} {Demand}: {A} {Deep}
+  {Spatiotemporal} {Network} for {Hyper}-imbalanced {Data}.
+\newblock In {\em 2020 {IEEE} 23rd {International} {Conference} on
+  {Intelligent} {Transportation} {Systems} ({ITSC})}, pages 1--8, September
+  2020.
+
+\bibitem{rodrigues_beyond_2020}
+Filipe Rodrigues and Francisco~C. Pereira.
+\newblock Beyond {Expectation}: {Deep} {Joint} {Mean} and {Quantile}
+  {Regression} for {Spatiotemporal} {Problems}.
+\newblock {\em IEEE Transactions on Neural Networks and Learning Systems},
+  31(12):5377--5389, December 2020.
+
+\bibitem{lai_taxi_2019}
+Yongxuan Lai, Kaixin Zhang, Junqiang Lin, Fan Yang, and Yi~Fan.
+\newblock Taxi {Demand} {Prediction} with {LSTM}-{Based} {Combination} {Model}.
+\newblock In {\em 2019 {IEEE} {Intl} {Conf} on {Parallel} \& {Distributed}
+  {Processing} with {Applications}, {Big} {Data} \& {Cloud} {Computing},
+  {Sustainable} {Computing} \& {Communications}, {Social} {Computing} \&
+  {Networking} ({ISPA}/{BDCloud}/{SocialCom}/{SustainCom})}, pages 944--950,
+  December 2019.
+
+\bibitem{vaswani_attention_2017}
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+  Aidan~N. Gomez, Lukasz Kaiser, and Illia Polosukhin.
+\newblock Attention {Is} {All} {You} {Need}, December 2017.
+\newblock arXiv:1706.03762 [cs].
+
+\bibitem{cao_bert-based_2022}
+Dun Cao, Kai Zeng, Jin Wang, Pradip~Kumar Sharma, Xiaomin Ma, Yonghe Liu, and
+  Siyuan Zhou.
+\newblock {BERT}-{Based} {Deep} {Spatial}-{Temporal} {Network} for {Taxi}
+  {Demand} {Prediction}.
+\newblock {\em IEEE Transactions on Intelligent Transportation Systems},
+  23(7):9442--9454, July 2022.
+
+\bibitem{chen_multi-source_2021}
+Ziyan Chen.
+\newblock Multi-{Source} {Information} {Based} {Short}-term {Taxi} {Demand}
+  {Prediction} {Using} {Deep}-{Learning} {Approaches}.
+\newblock {\em Journal of Physics}, page~15, 2021.
+
+\bibitem{zhang_taxi_2022}
+Chizhan Zhang, Fenghua Zhu, Xiao Wang, Leilei Sun, Haina Tang, and Yisheng Lv.
+\newblock Taxi {Demand} {Prediction} {Using} {Parallel} {Multi}-{Task}
+  {Learning} {Model}.
+\newblock {\em IEEE Transactions on Intelligent Transportation Systems},
+  23(2):794--803, February 2022.
+
+\bibitem{liu_context-aware_2022}
+Z.~Liu, J.~Li, and K.~Wu.
+\newblock Context-{Aware} {Taxi} {Dispatching} at {City}-{Scale} {Using} {Deep}
+  {Reinforcement} {Learning}.
+\newblock {\em IEEE Transactions on Intelligent Transportation Systems},
+  23(3):1996--2009, 2022.
+\newblock Publisher: Institute of Electrical and Electronics Engineers Inc.
+
+\bibitem{liu_contextualized_2019}
+Lingbo Liu, Zhilin Qiu, Guanbin Li, Qing Wang, Wanli Ouyang, and Liang Lin.
+\newblock Contextualized {Spatial}–{Temporal} {Network} for {Taxi}
+  {Origin}-{Destination} {Demand} {Prediction}.
+\newblock {\em IEEE Transactions on Intelligent Transportation Systems},
+  20(10):3875--3887, October 2019.
+
+\bibitem{askari_taxi_2020}
+Bahman Askari, Tai Le~Quy, and Eirini Ntoutsi.
+\newblock Taxi {Demand} {Prediction} using an {LSTM}-{Based} {Deep} {Sequence}
+  {Model} and {Points} of {Interest}.
+\newblock In {\em 2020 {IEEE} 44th {Annual} {Computers}, {Software}, and
+  {Applications} {Conference} ({COMPSAC})}, pages 1719--1724, July 2020.
+\newblock ISSN: 0730-3157.
+
+\bibitem{goodfellow_generative_2014}
+Ian~J. Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David
+  Warde-Farley, Sherjil Ozair, Aaron Courville, and Yoshua Bengio.
+\newblock Generative {Adversarial} {Networks}, June 2014.
+\newblock arXiv:1406.2661 [cs, stat].
+
+\bibitem{jiang_forecasting_2019}
+Congmei Jiang, Yize Chen, Yongfang Mao, Yi~Chai, and Mingbiao Yu.
+\newblock Forecasting {Spatio}-{Temporal} {Renewable} {Scenarios}: a {Deep}
+  {Generative} {Approach}, March 2019.
+\newblock arXiv:1903.05274 [cs, math].
+
+\bibitem{saxena_12d_2022}
+D.~Saxena and J.~Cao.
+\newblock {12D} {Spatio}-{Temporal} {Prediction} with {Stochastic}
+  {Adversarial} {Networks}.
+\newblock {\em ACM Transactions on Intelligent Systems and Technology}, 13(2),
+  2022.
+\newblock Publisher: Association for Computing Machinery.
+
+\bibitem{surendra_review_2017}
+H~Surendra.
+\newblock A {Review} {Of} {Synthetic} {Data} {Generation} {Methods} {For}
+  {Privacy} {Preserving} {Data} {Publishing}, 2017.
+
+\bibitem{rezende_stochastic_2014}
+Danilo~Jimenez Rezende, Shakir Mohamed, and Daan Wierstra.
+\newblock Stochastic {Backpropagation} and {Approximate} {Inference} in {Deep}
+  {Generative} {Models}, May 2014.
+\newblock arXiv:1401.4082 [cs, stat].
+
+\bibitem{kingma_auto-encoding_2014}
+Diederik~P. Kingma and Max Welling.
+\newblock Auto-{Encoding} {Variational} {Bayes}, May 2014.
+\newblock arXiv:1312.6114 [cs, stat].
+
+\bibitem{larsen_autoencoding_2016}
+Anders Boesen~Lindbo Larsen, Søren~Kaae Sønderby, Hugo Larochelle, and Ole
+  Winther.
+\newblock Autoencoding beyond pixels using a learned similarity metric,
+  February 2016.
+\newblock arXiv:1512.09300 [cs, stat].
+
+\bibitem{gao_generative_2022}
+Nan Gao, Hao Xue, Wei Shao, Sichen Zhao, Kyle~Kai Qin, Arian Prabowo, Mohammad
+  Rahaman, and Flora Salim.
+\newblock Generative {Adversarial} {Networks} for {Spatio}-temporal {Data}: {A}
+  {Survey}.
+\newblock {\em ACM Transactions on Intelligent Systems and Technology},
+  13:1--25, April 2022.
+
+\bibitem{DBLP:journals/corr/abs-1907-08556}
+Divya Saxena and Jiannong Cao.
+\newblock {D-GAN:} deep generative adversarial nets for spatio-temporal
+  prediction.
+\newblock {\em CoRR}, abs/1907.08556, 2019.
+
+\bibitem{mirza_conditional_2014}
+Mehdi Mirza and Simon Osindero.
+\newblock Conditional {Generative} {Adversarial} {Nets}, November 2014.
+\newblock arXiv:1411.1784 [cs, stat].
+
+\bibitem{zhou_predicting_2018}
+Xian Zhou, Yanyan Shen, Yanmin Zhu, and Linpeng Huang.
+\newblock Predicting {Multi}-step {Citywide} {Passenger} {Demands} {Using}
+  {Attention}-based {Neural} {Networks}.
+\newblock In {\em Proceedings of the {Eleventh} {ACM} {International}
+  {Conference} on {Web} {Search} and {Data} {Mining}}, {WSDM} '18, pages
+  736--744, New York, NY, USA, February 2018. Association for Computing
+  Machinery.
+
+\bibitem{prado-rujas_combining_2023}
+Ignacio-Iker Prado-Rujas, Emilio Serrano, Antonio García-Dopico, M.~Luisa
+  Córdoba, and María~S. Pérez.
+\newblock Combining heterogeneous data sources for spatio-temporal mobility
+  demand forecasting.
+\newblock {\em Information Fusion}, 91:1--12, March 2023.
+
+\bibitem{noauthor_nyc_nodate}
+{NYC} {Open} {Data} -.
+\newblock \url{https://opendata.cityofnewyork.us/}.
+
+\bibitem{noauthor_citi_nodate}
+Citi {Bike} {System} {Data} {\textbar} {Citi} {Bike} {NYC}.
+\newblock \url{https://ride.citibikenyc.com/system-data}.
+
+\bibitem{noauthor_weather_nodate}
+Weather {History} \& {Data} {Archive} {\textbar} {Weather} {Underground}.
+\newblock \url{https://www.wunderground.com/history}.
+
+\bibitem{scikit-learn}
+F.~Pedregosa, G.~Varoquaux, A.~Gramfort, V.~Michel, B.~Thirion, O.~Grisel,
+  M.~Blondel, P.~Prettenhofer, R.~Weiss, V.~Dubourg, J.~Vanderplas, A.~Passos,
+  D.~Cournapeau, M.~Brucher, M.~Perrot, and E.~Duchesnay.
+\newblock Scikit-learn: Machine learning in {P}ython.
+\newblock {\em Journal of Machine Learning Research}, 12:2825--2830, 2011.
+
+\bibitem{nash_generating_2021}
+Charlie Nash, Jacob Menick, Sander Dieleman, and Peter~W. Battaglia.
+\newblock Generating {Images} with {Sparse} {Representations}, March 2021.
+\newblock arXiv:2103.03841 [cs, stat].
+
+\bibitem{yan_second_2018}
+Yan Yan, Yuxing Mao, and Bo~Li.
+\newblock {SECOND}: {Sparsely} {Embedded} {Convolutional} {Detection}.
+\newblock {\em Sensors}, 18(10):3337, October 2018.
+
+\end{thebibliography}
