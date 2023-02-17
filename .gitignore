@@ -1,4 +1,10 @@
 data/*
 src/__pycache__/*
-
-
+src/*.png
+src/*.gz
+src/*h5
+src/saved_model/*
+*.pdf
+help/*
+src/*history*
+src/*results*
